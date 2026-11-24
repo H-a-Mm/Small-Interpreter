@@ -14,7 +14,7 @@ fn main() {
 
     // Contruction variables
     let mut variables = HashMap::new();
-    
+
     loop {
         print!(">> ");
         io::stdout().flush().unwrap();
