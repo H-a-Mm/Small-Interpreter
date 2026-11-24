@@ -1,3 +1,5 @@
+use crate::toknizer::Token::{Identifier};
+
 // All token Types
 #[derive(Debug, Clone)] // Derive so we can print
 pub enum Token {
@@ -10,6 +12,9 @@ pub enum Token {
 
     LParen, // Left Parenthesis
     RParen, // Right Parenthesis
+    
+    Equal, // Assignment operator
+    Identifier(String), // Declaration Identifier
 
 // -- Data Types -- //
     
@@ -29,8 +34,18 @@ pub fn tokenize(input: &str) -> Vec<Token> {
     
     // Step Through charecters and tokenize, till we reach the end of the code.
     while i < bytes.len() {
+
+        if bytes[i].is_ascii_alphabetic() {
+            let mut name = String::new();
+
+            while i < bytes.len() && bytes[i].is_ascii_alphanumeric() || bytes[i] == b'_' {
+                name.push(bytes[i] as char);
+                i += 1;
+            }
+            tokens.push(Identifier(name))
+        }
         
-        // (The match tabe uses ascii values, not string values)
+        // (The match tabe uses ascii values, not string values) table is listed only for operators and data types, not assignments.
         match bytes[i] {
             b'0'..=b'9' => {                 // Is Digit
                 let mut value = 0i32;
@@ -41,10 +56,13 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 tokens.push(Token::Int(value));
                 continue;
             },
+            
             b'-' => tokens.push(Token::Dif), // Subtraction
             b'+' => tokens.push(Token::Add), // Addition
             b'*' => tokens.push(Token::Mul), // Multiplication
             b'/' => tokens.push(Token::Div), // Division
+            
+            b'=' => tokens.push(Token::Equal), // Asignment operator
 
             b'(' => tokens.push(Token::LParen), // Left Parenthesis
             b')' => tokens.push(Token::RParen), // Right Parenthesis

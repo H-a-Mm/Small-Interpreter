@@ -3,6 +3,7 @@
 
 // crates
 use std::io::{self, Write};
+use std::collections::HashMap;
 
 // modules
 mod interpreter;
@@ -10,6 +11,10 @@ mod parser;
 mod toknizer;
 
 fn main() {
+
+    // Contruction variables
+    let mut variables = HashMap::new();
+    
     loop {
         print!(">> ");
         io::stdout().flush().unwrap();
@@ -33,7 +38,7 @@ fn main() {
         let parsed = parser::parse_expr(&mut tokens, 1.0);
 
         // Evaluate parsed expression
-        let output = interpreter::eval(parsed);
+        let output = interpreter::eval(parsed, &mut variables);
 
         println!(">> {:?}", output)
     }

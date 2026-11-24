@@ -5,6 +5,13 @@ use crate::toknizer;
 pub enum Expr {
     Int(i32),
 
+    Variable(String),
+
+    Assignment {
+        name: String,
+        value: Box<Expr>,
+    },
+
     Binary {
         left: Box<Expr>,
         op: Token,
@@ -24,9 +31,23 @@ pub fn parse_expr(tokens: &mut Vec<Token>, min_bp: f32) -> Expr {
                 Token::RParen => {}
                 token => panic!("Expected ')', found {:?}", token),
             }
-        
             expr
         }
+
+        Token::Identifier(name) => {
+            if matches!(toknizer::peek(tokens), Token::Equal) {
+                toknizer::next(tokens); // consume '='
+    
+                let value = parse_expr(tokens, 0.0);
+        
+                Expr::Assignment {
+                    name,
+                    value: Box::new(value),
+                }
+            } else {
+                Expr::Variable(name)
+            }
+        },
 
         _ => panic!("Bad token at location -> {:?}", tokens)
     };
