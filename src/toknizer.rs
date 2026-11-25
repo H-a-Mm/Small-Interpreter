@@ -14,6 +14,11 @@ pub enum Token {
     RParen, // Right Parenthesis
     
     Equal, // Assignment operator
+
+    Greater, // Greater than
+    Less, // Less than
+    EqualToo, // Equal to
+    
     Identifier(String), // Declaration Identifier
 
 // -- Data Types -- //
@@ -61,11 +66,21 @@ pub fn tokenize(input: &str) -> Vec<Token> {
             b'+' => tokens.push(Token::Add), // Addition
             b'*' => tokens.push(Token::Mul), // Multiplication
             b'/' => tokens.push(Token::Div), // Division
-            
-            b'=' => tokens.push(Token::Equal), // Asignment operator
 
             b'(' => tokens.push(Token::LParen), // Left Parenthesis
             b')' => tokens.push(Token::RParen), // Right Parenthesis
+            
+            b'>' => tokens.push(Token::Greater), // Greater than
+            b'<' => tokens.push(Token::Less), // Less than
+            b'=' => {
+                if i + 1 < bytes.len() && bytes[i + 1] == b'=' {
+                    tokens.push(Token::EqualToo); // Equivalent
+                    i += 1;
+                } else {
+                    tokens.push(Token::Equal); // Assingment
+                }
+            },
+
             
             b' ' | b'\r' | b'\n' => {        // Specific Exception arm
                 // Ignore

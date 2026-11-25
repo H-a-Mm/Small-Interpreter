@@ -5,6 +5,8 @@
 use std::io::{self, Write};
 use std::collections::HashMap;
 
+use crate::interpreter::Output;
+
 // modules
 mod interpreter;
 mod parser;
@@ -38,8 +40,11 @@ fn main() {
         let parsed = parser::parse_expr(&mut tokens, 1.0);
 
         // Evaluate parsed expression
-        let output = interpreter::eval(parsed, &mut variables);
+        let result = interpreter::eval(parsed, &mut variables);
 
-        println!(">> {:?}", output)
+        match result {
+            Output::Int(n) => println!("{}", n),
+            Output::Bool(n) => println!("{}", n),
+        }
     }
 }
