@@ -42,9 +42,12 @@ fn main() {
         // Evaluate parsed expression
         let result = interpreter::eval(parsed, &mut variables);
 
+        // Decode output
         match result {
             Output::Int(n) => println!("{}", n),
             Output::Bool(n) => println!("{}", n),
+
+            _ => {}
         }
     }
 }

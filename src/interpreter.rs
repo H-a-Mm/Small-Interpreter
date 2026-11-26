@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt;
 
 use crate::parser::Expr;
 use crate::toknizer::Token;
@@ -6,7 +7,20 @@ use crate::toknizer::Token;
 #[derive(Debug)]
 pub enum Output {
     Int(i32),
-    Bool(bool)
+    String(String),
+    Bool(bool),
+    None(),
+}
+
+impl fmt::Display for Output {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Output::Int(v) => write!(f, "{v}"),
+            Output::String(v) => write!(f, "{v}"),
+            Output::Bool(v) => write!(f, "{v}"),
+            Output::None() => write!(f, ""),
+        }
+    }
 }
 
 pub fn eval(expr: Expr, variables: &mut HashMap<String, i32>) -> Output {
@@ -33,8 +47,9 @@ pub fn eval(expr: Expr, variables: &mut HashMap<String, i32>) -> Output {
                         Token::Mul => Output::Int(l * r),
                         Token::Div => Output::Int(l / r),
                         Token::EqualToo => Output::Bool(l == r),
-                        Token::Greater => Output::Bool(l>r),
-                        Token::Less => Output::Bool(l<r),
+                        Token::Greater => Output::Bool(l > r),
+                        Token::Less => Output::Bool(l < r),
+                        Token::NotEqualTo => Output::Bool(l != r),
 
                         _ => panic!("Bad operator: {:?}", op),
                     }
@@ -45,6 +60,15 @@ pub fn eval(expr: Expr, variables: &mut HashMap<String, i32>) -> Output {
         }
 
         Expr::Assignment { name, value } => {
+
+            // Edge cases
+            match value.as_ref() {
+                Expr::Macro { .. } => {
+                    panic!("cannot assign a macro result to a variable");
+                }
+                _ => {}
+            }
+            
             let result = eval(*value, variables);
 
             match result {
@@ -56,6 +80,30 @@ pub fn eval(expr: Expr, variables: &mut HashMap<String, i32>) -> Output {
                 Output::Bool(_) => {
                     panic!("Cannot assign boolean to variable")
                 }
+                _ => Output::None()
+            }
+        }
+
+        // Hard coded interpreter macros
+        Expr::Macro { name, argument } => {
+            let arg = eval(*argument, variables);
+        
+            match name.as_str() {
+                "print" => {
+                    print!("{} \n", arg);
+                    Output::None()
+                }
+        
+                "println" => {
+                    println!("{} \n", arg);
+                    Output::None()
+                }
+        
+                "panic" => {
+                    panic!("{} \n", arg);
+                }
+        
+                _ => panic!("Unknown macro: {}", name),
             }
         }
     }

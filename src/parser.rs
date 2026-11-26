@@ -1,4 +1,4 @@
-use crate::toknizer;
+use crate::toknizer::{self, tokenize};
 use crate::toknizer::Token;
 
 #[derive(Debug)]
@@ -6,6 +6,11 @@ pub enum Expr {
     Int(i32),
 
     Variable(String),
+
+    Macro {
+        name: String,
+        argument: Box<Expr>,
+    },
 
     Assignment {
         name: String,
@@ -34,17 +39,38 @@ pub fn parse_expr(tokens: &mut Vec<Token>, min_bp: f32) -> Expr {
         }
 
         Token::Identifier(name) => {
-            if matches!(toknizer::peek(tokens), Token::Equal) {
-                toknizer::next(tokens); // consume '='
+            match toknizer::peek(tokens) {
+                Token::Equal => {
+                    toknizer::next(tokens);
+                
+                    let value = parse_expr(tokens, 0.0);
+                
+                    Expr::Assignment {name, value: Box::new(value)}
+                
+                }, 
 
-                let value = parse_expr(tokens, 0.0);
-
-                Expr::Assignment {
-                    name,
-                    value: Box::new(value),
+                Token::Macro => {
+                    toknizer::next(tokens);
+                    
+                    match toknizer::next(tokens) {
+                        Token::LParen => {}
+                        token => panic!("Expected '(' after macro, found {:?}", token),
+                    }
+                    
+                    let argument = parse_expr(tokens, 0.0);
+                    
+                    match toknizer::next(tokens) {
+                        Token::RParen => {}
+                        token => panic!("Expected ')' after macro argument, found {:?}", token),
+                    }
+                    
+                    Expr::Macro {
+                        name,
+                        argument: Box::new(argument),
+                    }
                 }
-            } else {
-                Expr::Variable(name)
+              
+              _ => panic!("Bad token")  
             }
         }
 
@@ -61,6 +87,7 @@ pub fn parse_expr(tokens: &mut Vec<Token>, min_bp: f32) -> Expr {
             | Token::Mul
             | Token::EqualToo
             | Token::Greater
+            | Token::NotEqualTo
             | Token::Less
             | Token::Div => toknizer::peek(tokens),
 
@@ -93,6 +120,7 @@ fn infix_binding_power(token: &Token) -> (f32, f32) {
         Token::Add | Token::Dif => (1.0, 1.1),      // left associative
         Token::Mul | Token::Div => (2.0, 2.1),      // left associative
         Token::Greater | Token::Less => (1.0, 1.1), // left associative
+        Token::EqualToo | Token::NotEqualTo => (1.0, 1.1),
         _ => panic!("Bad operator, at token {:?}", token),
     }
 }

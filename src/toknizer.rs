@@ -18,15 +18,18 @@ pub enum Token {
     Greater, // Greater than
     Less, // Less than
     EqualToo, // Equal to
+    NotEqualTo, // Not Equal to
     
     Identifier(String), // Declaration Identifier
 
 // -- Data Types -- //
-    
+
     Int(i32), // Ineteger
+    Str(String), // String
 
 // -- Misc -- //
 
+    Macro,
     Eof, // End Of file
 }
 
@@ -52,13 +55,23 @@ pub fn tokenize(input: &str) -> Vec<Token> {
         
         // (The match tabe uses ascii values, not string values) table is listed only for operators and data types, not assignments.
         match bytes[i] {
-            b'0'..=b'9' => {                 // Is Digit
+            b'0'..=b'9' => { // Is Digit
                 let mut value = 0i32;
                 while i < bytes.len() && bytes[i].is_ascii_digit() {
-                        value = value * 10 + (bytes[i] - b'0') as i32;
+                    value = value * 10 + (bytes[i] - b'0') as i32;
                     i += 1;
                 }
                 tokens.push(Token::Int(value));
+                continue;
+            },
+
+            b'"' => { // String value
+                let mut string = String::new();
+                while i < bytes.len() && bytes[i] != b'"' {
+                    string.push(bytes[i] as char);
+                    i += 1;
+                }
+                tokens.push(Token::Str(string));
                 continue;
             },
             
@@ -76,10 +89,15 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 if i + 1 < bytes.len() && bytes[i + 1] == b'=' {
                     tokens.push(Token::EqualToo); // Equivalent
                     i += 1;
+                } else if i + 1 < bytes.len() && bytes[i + 1] == b'!'{
+                    tokens.push(Token::NotEqualTo);
+                    i += 1
                 } else {
                     tokens.push(Token::Equal); // Assingment
                 }
             },
+
+            b'!' => tokens.push(Token::Macro),
 
             
             b' ' | b'\r' | b'\n' => {        // Specific Exception arm
